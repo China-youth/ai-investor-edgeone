@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "src": "^/chat$",
+      "method": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "PATCH",
+        "HEAD",
+        "OPTIONS"
+      ]
+    },
+    {
+      "src": "^/stop$",
+      "method": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "PATCH",
+        "HEAD",
+        "OPTIONS"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "edgeone-agent-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runtime dependencies for EdgeOne agent",
+  "main": "index.mjs",
+  "dependencies": {
+    "@edgeone/openinference-instrumentation-openai-agents": "^0.1.0",
+    "@openai/agents": "^0.1.0",
+    "supports-color": "latest"
+  }
+}

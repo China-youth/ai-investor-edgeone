@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI 投资人 - 副业验证</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="avatar">
+        <svg viewBox="0 0 100 100" width="48" height="48">
+          <!-- Face -->
+          <circle cx="50" cy="50" r="45" fill="#FFD93D" />
+          <!-- Sunglasses -->
+          <rect x="18" y="32" width="28" height="18" rx="6" fill="#333" />
+          <rect x="54" y="32" width="28" height="18" rx="6" fill="#333" />
+          <line x1="46" y1="38" x2="54" y2="38" stroke="#333" stroke-width="3" />
+          <!-- Smirk -->
+          <path d="M 35 65 Q 50 72 65 62" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round" />
+          <!-- Money bag hat -->
+          <path d="M 30 15 Q 50 -5 70 15" fill="#FF8C61" />
+          <text x="50" y="14" text-anchor="middle" font-size="14" fill="#FFF">¥</text>
+        </svg>
+      </div>
+      <div class="header-info">
+        <h1>AI 投资人</h1>
+        <span class="status">● 在线</span>
+      </div>
+      <button class="clear-btn" onclick="clearChat()" title="清空对话">🗑️</button>
+    </header>
+
+    <!-- Chat Area -->
+    <main class="chat-container" id="chatContainer">
+      <div class="welcome-message">
+        <div class="welcome-bubble">
+          <p>👋 你好，我是<strong>毒舌投资人</strong>。</p>
+          <p>我见过太多项目，好的坏的都门儿清。</p>
+          <p>把你的副业想法告诉我，我给你一个<strong>真实到扎心</strong>的评估——包括我愿意投多少钱（或者白送都不要 👋）。</p>
+          <p class="hint">💡 描述得越详细（做什么、目标用户、怎么赚钱），我骂得越准。</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Input Area -->
+    <footer class="input-area">
+      <div class="input-wrapper">
+        <textarea
+          id="messageInput"
+          placeholder="描述你的副业想法..."
+          rows="1"
+          oninput="autoResize(this)"
+          onkeydown="handleKeydown(event)"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+          <span>发送</span>
+        </button>
+      </div>
+      <div class="footer-note">AI 生成内容仅供参考，投资有风险 💸</div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "ai-investor-edgeone",
+  "version": "1.0.0",
+  "description": "AI 投资人 - 副业验证 Agent",
+  "scripts": {
+    "build": "echo 'No build step for pure HTML project'",
+    "dev": "echo 'Use edgeone makers dev for local development'"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.1.0",
+    "openai": "^5.23.2",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
