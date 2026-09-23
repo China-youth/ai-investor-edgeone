@@ -64705,10 +64705,11 @@ process.on("SIGTERM", () => {
 });
 var port = 9e3;
 var server = http.createServer((req, res) => {
-  requestHandler(req, res).catch((error2) => {
+    requestHandler(req, res).catch((error2) => {
     const requestId = String(req.headers["x-scf-request-id"] || "");
     console.error("[agent-runtime] Request failed with status 502:", (error2 == null ? void 0 : error2.message) || "Unknown error");
     console.log(`Makers request path: ${req.url || "/"} |scfRequestId=${requestId}|statusCode=502|`);
+    
     if (!req.headers["eo-pages-host"] || req.headers["eo-pages-host"] === "localhost:9000" || req.headers["eo-pages-host"] === "undefined" || req.headers["eo-pages-host"] === "null" || req.headers.host === "localhost:9000") {
       console.log(`Makers request info: ${JSON.stringify({
         host: req.headers.host,
@@ -64721,18 +64722,28 @@ var server = http.createServer((req, res) => {
         url: req.url
       })}`);
     }
-    res.writeHead(502, {
-      "Content-Type": "application/json",
-      "Functions-Request-Id": requestId,
-      "eo-pages-inner-scf-status": "502",
-      "eo-pages-inner-status-intercept": "true"
-    });
-    res.end(JSON.stringify({
-      code: "AGENT_RUNTIME_BOOTSTRAP_ERROR",
-      message: (error2 == null ? void 0 : error2.message) || "Unknown error",
-      functions_request_id: requestId || null,
-      suggestion: "Check agent runtime startup logs and deployment bootstrap configuration."
-    }));
+
+    // ⭐ 终极修复：检查响应头是否已经发送，防止重复写入导致 ERR_HTTP_HEADERS_SENT 崩溃
+    if (!res.headersSent) {
+      res.writeHead(502, {
+        "Content-Type": "application/json",
+        "Functions-Request-Id": requestId,
+        "eo-pages-inner-scf-status": "502",
+        "eo-pages-inner-status-intercept": "true"
+      });
+      res.end(JSON.stringify({
+        code: "AGENT_RUNTIME_BOOTSTRAP_ERROR",
+        message: (error2 == null ? void 0 : error2.message) || "Unknown error",
+        functions_request_id: requestId || null,
+        suggestion: "Check agent runtime startup logs and deployment bootstrap configuration."
+      }));
+    } else {
+      // 如果流已经开始，就不能再改状态码了，直接安全关闭连接
+      if (!res.writableEnded) {
+        res.end();
+      }
+    }
+  });
   });
 });
 server.headersTimeout = 0;
