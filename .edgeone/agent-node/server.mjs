@@ -64394,152 +64394,174 @@ function firstForwardedProto(value) {
   return String(raw || "").split(",")[0].trim().toLowerCase();
 }
 async function handleResponse(res, response, passHeaders = {}) {
-  var _a3, _b, _c;
-  const startTime = Date.now();
-  const conversationId = passHeaders["makers-conversation-id"] || "";
-  if (!response) {
-    const requestId = passHeaders["functions-request-id"] || "";
-    const headers = {
-      "Functions-Request-Id": requestId,
-      "eo-pages-inner-scf-status": "404",
-      "eo-pages-inner-status-intercept": "true"
-    };
-    if (conversationId) {
-      headers["makers-conversation-id"] = conversationId;
-    }
-    res.writeHead(404, headers);
-    res.end(JSON.stringify({
-      error: "Not Found",
-      message: "The requested path does not exist"
-    }));
-    const endTime = Date.now();
-    return;
-  }
-  try {
-    if (response instanceof Response) {
-      let validateCacheControlHeader = function(headers2) {
-        const cacheControl = headers2["cache-control"];
-        if (cacheControl) {
-          const directives = cacheControl.split(",").map((directive) => directive.trim());
-          const validatedDirectives = [];
-          for (const directive of directives) {
-            if (!directive)
-              continue;
-            const [key, value] = directive.split("=");
-            const standardDirectives = ["max-age", "public", "private", "s-maxage", "no-cache", "no-store", "no-transform", "must-revalidate", "proxy-revalidate", "must-understand", "stale-while-revalidate", "stale-if-error", "immutable"];
-            if (!standardDirectives.includes(key)) {
-              continue;
-            }
-            if (key === "stale-while-revalidate" || key === "stale-if-error") {
-              if (!value) {
-                const defaultValue = "31536000";
-                validatedDirectives.push(key + "=" + defaultValue);
-                continue;
-              }
-            }
-            validatedDirectives.push(directive);
-          }
-          headers2["cache-control"] = validatedDirectives.join(", ");
-        }
-      };
-      const requestId = passHeaders["functions-request-id"] || "";
-      const responseStatus = response.status;
-      const headers = Object.fromEntries(response.headers);
-      validateCacheControlHeader(headers);
-      headers["Functions-Request-Id"] = requestId;
-      if (conversationId) {
-        headers["makers-conversation-id"] = conversationId;
-      }
-      if (!headers["eo-pages-inner-scf-status"]) {
-        headers["eo-pages-inner-scf-status"] = String(responseStatus);
-      }
-      if (!headers["eo-pages-inner-status-intercept"]) {
-        headers["eo-pages-inner-status-intercept"] = "false";
-      }
-      if (response.headers.get("eop-client-geo")) {
-        response.headers.delete("eop-client-geo");
-      }
-      delete headers["x-content-type-stream"];
-      delete headers["X-Content-Type-Stream"];
-      const hasInternalStreamSignal = response.headers.get("x-content-type-stream") === "true";
-      const isStream = response.body && (((_a3 = response.headers.get("content-type")) == null ? void 0 : _a3.includes("text/event-stream")) || ((_b = response.headers.get("transfer-encoding")) == null ? void 0 : _b.includes("chunked")) || hasInternalStreamSignal);
-      if (isStream) {
-        const streamHeaders = {
-          ...headers
-        };
-        if ((_c = response.headers.get("content-type")) == null ? void 0 : _c.includes("text/event-stream")) {
-          streamHeaders["Content-Type"] = "text/event-stream";
-          streamHeaders["Cache-Control"] = "no-cache, no-transform";
-          streamHeaders["Connection"] = "keep-alive";
-          streamHeaders["X-Accel-Buffering"] = "no";
-        }
-        const hasTransferEncodingHeader = streamHeaders["transfer-encoding"] != null || streamHeaders["Transfer-Encoding"] != null;
-        if (!hasTransferEncodingHeader) {
-          streamHeaders["Transfer-Encoding"] = "chunked";
-        }
-        res.writeHead(response.status, streamHeaders);
-        if (typeof res.flushHeaders === "function") {
-          res.flushHeaders();
-        }
-        if (typeof response.body.pipe === "function") {
-          response.body.pipe(res);
-        } else {
-          const reader = response.body.getReader();
-          try {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done)
-                break;
-              if (value instanceof Uint8Array || Buffer.isBuffer(value)) {
-                res.write(value);
-              } else {
-                const chunk = new TextDecoder().decode(value);
-                res.write(chunk);
-              }
-            }
-          } finally {
-            reader.releaseLock();
-            res.end();
-          }
-        }
-      } else {
-        res.writeHead(response.status, headers);
-        const body = await response.text();
-        res.end(body);
-      }
-    } else {
+    var _a3, _b, _c;
+    const startTime = Date.now();
+    const conversationId = passHeaders["makers-conversation-id"] || "";
+
+    if (!response) {
       const requestId = passHeaders["functions-request-id"] || "";
       const headers = {
-        "Content-Type": "application/json",
         "Functions-Request-Id": requestId,
-        "eo-pages-inner-scf-status": "200",
-        "eo-pages-inner-status-intercept": "false"
+        "eo-pages-inner-scf-status": "404",
+        "eo-pages-inner-status-intercept": "true"
       };
       if (conversationId) {
         headers["makers-conversation-id"] = conversationId;
       }
-      res.writeHead(200, headers);
-      res.end(JSON.stringify(response));
+      res.writeHead(404, headers);
+      res.end(JSON.stringify({
+        error: "Not Found",
+        message: "The requested path does not exist"
+      }));
+      const endTime = Date.now();
+      return;
     }
-  } catch (error2) {
-    const requestId = passHeaders["functions-request-id"] || "";
-    const headers = {
-      "Functions-Request-Id": requestId,
-      "eo-pages-inner-scf-status": "502",
-      "eo-pages-inner-status-intercept": "true"
-    };
-    if (conversationId) {
-      headers["makers-conversation-id"] = conversationId;
+
+    try {
+      if (response instanceof Response) {
+        let validateCacheControlHeader = function(headers2) {
+          const cacheControl = headers2["cache-control"];
+          if (cacheControl) {
+            const directives = cacheControl.split(",").map((directive) => directive.trim());
+            const validatedDirectives = [];
+            for (const directive of directives) {
+              if (!directive) continue;
+              const [key, value] = directive.split("=");
+              const standardDirectives = ["max-age", "public", "private", "s-maxage", "no-cache", "no-store", "no-transform", "must-revalidate",
+  "proxy-revalidate", "must-understand", "stale-while-revalidate", "stale-if-error", "immutable"];
+              if (!standardDirectives.includes(key)) {
+                continue;
+              }
+              if (key === "stale-while-revalidate" || key === "stale-if-error") {
+                if (!value) {
+                  const defaultValue = "31536000";
+                  validatedDirectives.push(key + "=" + defaultValue);
+                  continue;
+                }
+              }
+              validatedDirectives.push(directive);
+            }
+            headers2["cache-control"] = validatedDirectives.join(", ");
+          }
+        };
+
+        const requestId = passHeaders["functions-request-id"] || "";
+        const responseStatus = response.status;
+        const headers = Object.fromEntries(response.headers);
+        validateCacheControlHeader(headers);
+        headers["Functions-Request-Id"] = requestId;
+        if (conversationId) {
+          headers["makers-conversation-id"] = conversationId;
+        }
+        if (!headers["eo-pages-inner-scf-status"]) {
+          headers["eo-pages-inner-scf-status"] = String(responseStatus);
+        }
+        if (!headers["eo-pages-inner-status-intercept"]) {
+          headers["eo-pages-inner-status-intercept"] = "false";
+        }
+        if (response.headers.get("eop-client-geo")) {
+          response.headers.delete("eop-client-geo");
+        }
+        delete headers["x-content-type-stream"];
+        delete headers["X-Content-Type-Stream"];
+        const hasInternalStreamSignal = response.headers.get("x-content-type-stream") === "true";
+        const isStream = response.body && (((_a3 = response.headers.get("content-type")) == null ? void 0 : _a3.includes("text/event-stream")) || ((_b =
+  response.headers.get("transfer-encoding")) == null ? void 0 : _b.includes("chunked")) || hasInternalStreamSignal);
+
+        if (isStream) {
+          const streamHeaders = { ...headers };
+          if ((_c = response.headers.get("content-type")) == null ? void 0 : _c.includes("text/event-stream")) {
+            streamHeaders["Content-Type"] = "text/event-stream";
+            streamHeaders["Cache-Control"] = "no-cache, no-transform";
+            streamHeaders["Connection"] = "keep-alive";
+            streamHeaders["X-Accel-Buffering"] = "no";
+          }
+          const hasTransferEncodingHeader = streamHeaders["transfer-encoding"] != null || streamHeaders["Transfer-Encoding"] != null;
+          if (!hasTransferEncodingHeader) {
+            streamHeaders["Transfer-Encoding"] = "chunked";
+          }
+
+          // ⭐ 关键修复：只在响应头未发送时才写入
+          if (!res.headersSent) {
+            res.writeHead(response.status, streamHeaders);
+            if (typeof res.flushHeaders === "function") {
+              res.flushHeaders();
+            }
+          }
+
+          if (typeof response.body.pipe === "function") {
+            response.body.pipe(res);
+          } else {
+            const reader = response.body.getReader();
+            try {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                if (value instanceof Uint8Array || Buffer.isBuffer(value)) {
+                  res.write(value);
+                } else {
+                  const chunk = new TextDecoder().decode(value);
+                  res.write(chunk);
+                }
+              }
+            } finally {
+              reader.releaseLock();
+              if (!res.writableEnded) {
+                res.end();
+              }
+            }
+          }
+        } else {
+          if (!res.headersSent) {
+            res.writeHead(response.status, headers);
+          }
+          const body = await response.text();
+          res.end(body);
+        }
+      } else {
+        const requestId = passHeaders["functions-request-id"] || "";
+        const headers = {
+          "Content-Type": "application/json",
+          "Functions-Request-Id": requestId,
+          "eo-pages-inner-scf-status": "200",
+          "eo-pages-inner-status-intercept": "false"
+        };
+        if (conversationId) {
+          headers["makers-conversation-id"] = conversationId;
+        }
+        if (!res.headersSent) {
+          res.writeHead(200, headers);
+        }
+        res.end(JSON.stringify(response));
+      }
+    } catch (error2) {
+      const requestId = passHeaders["functions-request-id"] || "";
+
+      // ⭐ 关键修复：检查响应头是否已发送，避免重复写入
+      if (!res.headersSent) {
+        const headers = {
+          "Functions-Request-Id": requestId,
+          "eo-pages-inner-scf-status": "502",
+          "eo-pages-inner-status-intercept": "true"
+        };
+        if (conversationId) {
+          headers["makers-conversation-id"] = conversationId;
+        }
+        res.writeHead(502, headers);
+        res.end(JSON.stringify({
+          error: "Internal Server Error",
+          message: error2.message
+        }));
+      } else {
+        // 响应头已发送，只关闭连接
+        if (!res.writableEnded) {
+          res.end();
+        }
+      }
+    } finally {
+      const endTime = Date.now();
     }
-    res.writeHead(502, headers);
-    res.end(JSON.stringify({
-      error: "Internal Server Error",
-      message: error2.message
-    }));
-  } finally {
-    const endTime = Date.now();
   }
-}
 var MCP_ENABLED = false;
 function normalizeIncomingHeaders(headers, requestId) {
   const result = {};
