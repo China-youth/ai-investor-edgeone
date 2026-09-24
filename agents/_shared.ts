@@ -19,6 +19,7 @@ export function createSSEResponse(
 ): Response {
   const stream = new ReadableStream({
     async start(controller) {
+      console.log('[sse] Stream start() invoked, beginning generator consumption...');
       // Heartbeat every 5s
       const heartbeat = setInterval(() => {
         if (signal?.aborted) {
@@ -39,6 +40,7 @@ export function createSSEResponse(
         }
       } catch (e) {
         const err = e as Error;
+        console.error('[sse] Generator threw outside inner try/catch:', err.message, err.stack);
         if (!signal?.aborted) {
           controller.enqueue(sseEvent({ type: 'error_message', content: err.message }));
         }

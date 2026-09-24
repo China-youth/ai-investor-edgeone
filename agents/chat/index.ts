@@ -79,8 +79,11 @@ export async function onRequest(context: any) {
   logger.info('Model name:', modelName);
 
   // Get tools from context - web_search if WSA_API_KEY is available
+  // ⚠️ 二分法排查：默认不挂任何平台工具（USE_PLATFORM_TOOLS=1 时才启用 14 个内置工具）
+  // 原因：怀疑 @makers/hy3-preview 不支持 strict 工具格式导致空流
+  const usePlatformTools = env.USE_PLATFORM_TOOLS === '1';
   let tools: any[] = [];
-  if (context.tools) {
+  if (usePlatformTools && context.tools) {
     try {
       tools = context.tools.all();
       logger.info('Tools retrieved, count:', tools.length);
@@ -90,8 +93,10 @@ export async function onRequest(context: any) {
     } catch (toolError) {
       logger.error('Failed to get tools:', toolError);
     }
+  } else if (usePlatformTools) {
+    logger.warn('USE_PLATFORM_TOOLS=1 but context.tools is undefined');
   } else {
-    logger.warn('context.tools is undefined');
+    logger.info('Tools disabled for bisect (USE_PLATFORM_TOOLS not set), running with tools=[]');
   }
 
   const agent = new Agent({
@@ -184,6 +189,13 @@ export async function onRequest(context: any) {
           }
         }
         logger.info('Total events processed:', eventCount, 'text length:', textBuffer.length);
+
+        // 防御：流正常结束但模型一个字都没吐 → 向前端显式报错，而不是空气泡
+        if (textBuffer.length === 0) {
+          const msg = `模型(${modelName})未返回任何内容。本次运行 tools 数量: ${tools.length}，事件数: ${eventCount}。若 tools>0，大概率是该模型不支持当前工具格式。`;
+          logger.error('Empty response detected:', msg);
+          yield sseEvent({ type: 'error_message', content: msg });
+        }
       } catch (e) {
         const err = e as Error;
         logger.error('Agent run error:', err.message);

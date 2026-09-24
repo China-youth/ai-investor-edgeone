@@ -20321,6 +20321,7 @@ function sseEvent(data) {
 function createSSEResponse(generator, signal) {
   const stream = new ReadableStream({
     async start(controller) {
+      console.log("[sse] Stream start() invoked, beginning generator consumption...");
       const heartbeat = setInterval(() => {
         if (signal == null ? void 0 : signal.aborted) {
           clearInterval(heartbeat);
@@ -20340,6 +20341,7 @@ function createSSEResponse(generator, signal) {
         }
       } catch (e) {
         const err = e;
+        console.error("[sse] Generator threw outside inner try/catch:", err.message, err.stack);
         if (!(signal == null ? void 0 : signal.aborted)) {
           controller.enqueue(sseEvent({ type: "error_message", content: err.message }));
         }
@@ -20440,7 +20442,8 @@ async function onRequest(context) {
   const modelName = env3.AI_GATEWAY_MODEL ?? "@makers/hy3-preview";
   logger3.info("Model name:", modelName);
   let tools = [];
-  if (context.tools) {
+  const usePlatformTools = env3.USE_PLATFORM_TOOLS === "1";
+  if (usePlatformTools && context.tools) {
     try {
       tools = context.tools.all();
       logger3.info("Tools retrieved, count:", tools.length);
@@ -20450,8 +20453,10 @@ async function onRequest(context) {
     } catch (toolError) {
       logger3.error("Failed to get tools:", toolError);
     }
+  } else if (usePlatformTools) {
+    logger3.warn("USE_PLATFORM_TOOLS=1 but context.tools is undefined");
   } else {
-    logger3.warn("context.tools is undefined");
+    logger3.info("Tools disabled for bisect (USE_PLATFORM_TOOLS not set), running with tools=[]");
   }
   const agent = new Agent2({
     name: "\u6BD2\u820C\u6295\u8D44\u4EBA",
@@ -20527,6 +20532,11 @@ async function onRequest(context) {
           }
         }
         logger3.info("Total events processed:", eventCount, "text length:", textBuffer.length);
+        if (textBuffer.length === 0) {
+          const msg = `\u6A21\u578B(${modelName})\u672A\u8FD4\u56DE\u4EFB\u4F55\u5185\u5BB9\u3002\u672C\u6B21\u8FD0\u884C tools \u6570\u91CF: ${tools.length}\uFF0C\u4E8B\u4EF6\u6570: ${eventCount}\u3002\u82E5 tools>0\uFF0C\u5927\u6982\u7387\u662F\u8BE5\u6A21\u578B\u4E0D\u652F\u6301\u5F53\u524D\u5DE5\u5177\u683C\u5F0F\u3002`;
+          logger3.error("Empty response detected:", msg);
+          yield sseEvent({ type: "error_message", content: msg });
+        }
       } catch (e) {
         const err = e;
         logger3.error("Agent run error:", err.message);
@@ -64743,7 +64753,6 @@ var server = http.createServer((req, res) => {
         res.end();
       }
     }
-  });
   });
 });
 server.headersTimeout = 0;
